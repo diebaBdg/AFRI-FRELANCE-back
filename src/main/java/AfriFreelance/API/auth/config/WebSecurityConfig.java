@@ -47,16 +47,7 @@ public class WebSecurityConfig {
 
             // Endpoints publics
             "/api/types-agrement/**",
-            "/api/demandes/public",
-            "/api/demandes/suivre/**",
-            "/api/public/**",
-            "/api/signatures/validate/**",
-            "/api/signatures/*/",
-            "/api/roles",
-            "/api/roles/**",
-            "/api/types-document/**",
-            "/api/paiement/notification",
-            "/api/email-gainde/**"
+            "/api/demandes/public"
     };
 
     @Bean
