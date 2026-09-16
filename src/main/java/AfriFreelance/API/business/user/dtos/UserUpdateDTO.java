@@ -3,8 +3,8 @@ package AfriFreelance.API.business.user.dtos;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
-import sn.gainde2000.senegallicenseplatformbackend.enums.UserStatus;
-import sn.gainde2000.senegallicenseplatformbackend.validation.StrongPassword;
+import AfriFreelance.API.enums.UserStatus;
+import AfriFreelance.API.validation.StrongPassword;
 
 import java.util.Set;
 

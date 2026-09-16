@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import sn.gainde2000.senegallicenseplatformbackend.enums.UserStatus;
+import AfriFreelance.API.enums.UserStatus;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -35,8 +35,6 @@ public class User {
 
     @Column(name = "adresse")
     private String adresse;
-
-
 
     @Column(length = 20)
     private String phone;

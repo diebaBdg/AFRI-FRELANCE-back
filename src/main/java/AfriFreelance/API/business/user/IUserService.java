@@ -1,8 +1,8 @@
 package AfriFreelance.API.business.user;
 
-import sn.gainde2000.senegallicenseplatformbackend.business.user.dtos.UserCreateDTO;
-import sn.gainde2000.senegallicenseplatformbackend.business.user.dtos.UserDTO;
-import sn.gainde2000.senegallicenseplatformbackend.business.user.dtos.UserUpdateDTO;
+import AfriFreelance.API.business.user.dtos.UserCreateDTO;
+import AfriFreelance.API.business.user.dtos.UserDTO;
+import AfriFreelance.API.business.user.dtos.UserUpdateDTO;
 
 import java.util.List;
 import java.util.UUID;

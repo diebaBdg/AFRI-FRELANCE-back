@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
-import sn.gainde2000.senegallicenseplatformbackend.validation.StrongPassword;
+import AfriFreelance.API.validation.StrongPassword;
 
 @Data
 public class RegisterRequest {

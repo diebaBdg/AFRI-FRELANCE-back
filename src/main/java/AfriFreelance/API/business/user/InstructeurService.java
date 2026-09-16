@@ -4,8 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import sn.gainde2000.senegallicenseplatformbackend.business.user.dtos.InstructeurStatsDTO;
-import sn.gainde2000.senegallicenseplatformbackend.config.exceptions.BusinessException;
+import AfriFreelance.API.business.user.dtos.InstructeurStatsDTO;
+import AfriFreelance.API.config.exceptions.BusinessException;
 
 import java.util.List;
 import java.util.UUID;

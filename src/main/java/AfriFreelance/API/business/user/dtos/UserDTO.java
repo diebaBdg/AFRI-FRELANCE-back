@@ -1,7 +1,7 @@
 package AfriFreelance.API.business.user.dtos;
 
 import lombok.Data;
-import sn.gainde2000.senegallicenseplatformbackend.enums.UserStatus;
+import AfriFreelance.API.enums.UserStatus;
 
 import java.time.LocalDateTime;
 import java.util.Set;

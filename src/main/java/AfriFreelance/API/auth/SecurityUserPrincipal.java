@@ -3,8 +3,8 @@ package AfriFreelance.API.auth;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import sn.gainde2000.senegallicenseplatformbackend.business.user.User;
-import sn.gainde2000.senegallicenseplatformbackend.enums.UserStatus;
+import AfriFreelance.API.business.user.User;
+import AfriFreelance.API.enums.UserStatus;
 
 import java.util.Collection;
 import java.util.UUID;

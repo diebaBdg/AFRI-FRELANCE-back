@@ -11,7 +11,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import sn.gainde2000.senegallicenseplatformbackend.utils.JwtUtils;
+import AfriFreelance.API.utils.JwtUtils;
 
 import java.io.IOException;
 

@@ -8,10 +8,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
-import sn.gainde2000.senegallicenseplatformbackend.business.user.dtos.AssignPermissionsRequest;
-import sn.gainde2000.senegallicenseplatformbackend.business.user.dtos.PermissionDTO;
-import sn.gainde2000.senegallicenseplatformbackend.business.user.dtos.RoleDTO;
-import sn.gainde2000.senegallicenseplatformbackend.config.exceptions.ResourceNotFoundException;
+import AfriFreelance.API.business.user.dtos.AssignPermissionsRequest;
+import AfriFreelance.API.business.user.dtos.PermissionDTO;
+import AfriFreelance.API.business.user.dtos.RoleDTO;
+import AfriFreelance.API.config.exceptions.ResourceNotFoundException;
 
 import java.util.List;
 import java.util.stream.Collectors;

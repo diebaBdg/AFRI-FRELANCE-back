@@ -8,10 +8,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import sn.gainde2000.senegallicenseplatformbackend.business.user.dtos.InstructeurStatsDTO;
-import sn.gainde2000.senegallicenseplatformbackend.business.user.dtos.UserCreateDTO;
-import sn.gainde2000.senegallicenseplatformbackend.business.user.dtos.UserDTO;
-import sn.gainde2000.senegallicenseplatformbackend.business.user.dtos.UserUpdateDTO;
+import AfriFreelance.API.business.user.dtos.InstructeurStatsDTO;
+import AfriFreelance.API.business.user.dtos.UserCreateDTO;
+import AfriFreelance.API.business.user.dtos.UserDTO;
+import AfriFreelance.API.business.user.dtos.UserUpdateDTO;
 
 import java.util.List;
 import java.util.UUID;

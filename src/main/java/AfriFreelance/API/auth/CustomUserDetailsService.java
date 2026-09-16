@@ -6,8 +6,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-import sn.gainde2000.senegallicenseplatformbackend.business.user.User;
-import sn.gainde2000.senegallicenseplatformbackend.business.user.UserRepository;
+import AfriFreelance.API.business.user.User;
+import AfriFreelance.API.business.user.UserRepository;
 
 import java.util.stream.Collectors;
 
