@@ -13,7 +13,7 @@ public class  AfrifreelanceApiApplication {
 
     private static void displayStartupInfo() {
         System.out.println("\n" +
-                "Afri-freelance Backend API démarrée !\n" +
-                "API Docs: http://localhost:8080/api/swagger-ui.html");
+                "AfriFreelance Backend API démarrée !\n" +
+                "API Docs: http://localhost:8080/api/v1/swagger-ui.html");
     }
 }

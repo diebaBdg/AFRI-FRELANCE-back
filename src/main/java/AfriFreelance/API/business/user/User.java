@@ -82,6 +82,9 @@ public class User {
     @Column(name = "member_since_year")
     private Integer memberSinceYear;
 
+    @Column(name = "last_password_change")
+    private LocalDateTime lastPasswordChange;
+
     @Column(name = "date_creation", nullable = false, updatable = false)
     private LocalDateTime dateCreation;
 
