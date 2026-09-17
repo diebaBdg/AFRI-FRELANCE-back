@@ -20,6 +20,8 @@ import AfriFreelance.API.business.user.User;
 import AfriFreelance.API.business.user.UserRepository;
 import AfriFreelance.API.enums.UserStatus;
 import AfriFreelance.API.utils.JwtUtils;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -31,6 +33,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
+@Tag(name = "Authentification", description = "Inscription, connexion et gestion des tokens JWT")
 public class AuthController {
 
     private final UserRepository userRepository;
@@ -48,42 +51,24 @@ public class AuthController {
     }
 
     @PostMapping("/login")
+    @Operation(summary = "Connexion utilisateur (email ou username + mot de passe)")
     public ResponseEntity<?> loginUser(@RequestBody LoginRequest loginRequest) {
-        System.out.println("=== DEBUT TENTATIVE DE CONNEXION ===");
-        System.out.println("Login reçu: " + loginRequest.login());
-        System.out.println("Longueur du mot de passe reçu: " + (loginRequest.password() != null ? loginRequest.password().length() : "NULL"));
-
         try {
-            System.out.println("Tentative d'authentification avec AuthenticationManager...");
-
             Optional<User> userOpt = findUserByLogin(loginRequest.login());
 
             if (userOpt.isEmpty()) {
-                System.out.println("ERREUR: Utilisateur non trouvé dans la base");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Identifiant ou mot de passe incorrect");
             }
 
             User user = userOpt.get();
-            System.out.println("Utilisateur trouvé: " + user.getUsername() + " (username), " + user.getEmail() + " (email)");
-
             String springUsername = user.getUsername();
-            System.out.println("Utilisation du username pour Spring Security: " + springUsername);
 
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(springUsername, loginRequest.password())
             );
 
-            System.out.println("AuthenticationManager a retourné une authentication");
-
             if (authentication.isAuthenticated()) {
-                System.out.println("Authentication.isAuthenticated() = TRUE");
-                System.out.println("Utilisateur authentifié: " + authentication.getName());
-                System.out.println("Statut utilisateur: " + user.getStatus()); // CORRECTION: getStatus()
-                System.out.println("Nombre de rôles: " + user.getRoles().size());
-
                 String token = jwtUtils.generateToken(user);
-                System.out.println("Token JWT généré avec succès");
-                System.out.println("=== CONNEXION RÉUSSIE ===");
 
                 return ResponseEntity.ok(new LoginResponse(
                         user.getId(),
@@ -96,60 +81,25 @@ public class AuthController {
                                 .collect(Collectors.toSet())
                 ));
             } else {
-                System.out.println("Authentication.isAuthenticated() = FALSE");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Identifiants invalides");
             }
 
         } catch (AuthenticationException e) {
-            System.out.println("ERREUR D'AUTHENTIFICATION: " + e.getMessage());
-            System.out.println("Type d'exception: " + e.getClass().getSimpleName());
-
-            System.out.println("Vérification manuelle de l'utilisateur...");
-            Optional<User> userOpt = findUserByLogin(loginRequest.login());
-
-            if (userOpt.isPresent()) {
-                User user = userOpt.get();
-                System.out.println("Utilisateur existe dans la base: " + user.getUsername());
-                System.out.println("Hash du mot de passe stocké: " + user.getPassword());
-                System.out.println("Longueur du hash: " + user.getPassword().length());
-
-                boolean passwordMatches = passwordEncoder.matches(loginRequest.password(), user.getPassword());
-                System.out.println("Vérification manuelle du mot de passe: " + passwordMatches);
-
-                if (!passwordMatches) {
-                    System.out.println("Le mot de passe fourni ne correspond pas au hash stocké");
-                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Identifiant ou mot de passe incorrect");
-                } else {
-                    System.out.println("Le mot de passe correspond mais Spring Security échoue");
-                    System.out.println("Cause probable: UserDetailsService cherche par username uniquement");
-                }
-            } else {
-                System.out.println("Utilisateur non trouvé dans la base de données");
-            }
-
             log.error("Erreur d'authentification : {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Identifiant ou mot de passe incorrect");
         } catch (Exception e) {
-            System.out.println("ERREUR INATTENDUE: " + e.getMessage());
-            e.printStackTrace();
+            log.error("Erreur inattendue lors de la connexion : {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erreur serveur");
         }
     }
 
 
     @GetMapping("/generate-hash")
+    @Operation(summary = "Générer un hash BCrypt pour un mot de passe (outil de débogage)")
     public ResponseEntity<?> generateHash(@RequestParam String password) {
-        System.out.println("Génération de hash BCrypt pour: " + password);
-
         try {
             String encodedPassword = passwordEncoder.encode(password);
-
-            System.out.println("Hash généré: " + encodedPassword);
-            System.out.println("Longueur: " + encodedPassword.length());
-
-            // Tester la correspondance
             boolean matches = passwordEncoder.matches(password, encodedPassword);
-            System.out.println("Test de correspondance: " + matches);
 
             Map<String, Object> response = new HashMap<>();
             response.put("password", password);
@@ -160,13 +110,14 @@ public class AuthController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            System.out.println("ERREUR lors de la génération du hash: " + e.getMessage());
+            log.error("Erreur lors de la génération du hash : {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Erreur: " + e.getMessage()));
         }
     }
 
     @PostMapping("/register")
+    @Operation(summary = "Inscription d'un nouvel utilisateur (rôle DEMANDEUR par défaut)")
     public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterRequest registerRequest) {
         try {
             if (userRepository.findByEmail(registerRequest.getEmail()).isPresent()) {
@@ -193,10 +144,10 @@ public class AuthController {
             User newUser = User.builder()
                     .username(username)
                     .email(registerRequest.getEmail())
-                    .fullName(registerRequest.getNom() + " " + registerRequest.getPrenom()) // Ajouter espace
+                    .fullName(registerRequest.getNom() + " " + registerRequest.getPrenom())
                     .phone(registerRequest.getPhone())
                     .password(passwordEncoder.encode(registerRequest.getPassword()))
-                    .status(UserStatus.ACTIF) // Définir le statut
+                    .status(UserStatus.ACTIF)
                     .build();
 
             Role demandeurRole = roleRepository.findByCode("DEMANDEUR")

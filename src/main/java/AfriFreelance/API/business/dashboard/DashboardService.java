@@ -112,7 +112,7 @@ public class DashboardService {
                             .value(cp.getHireRate() != null ? String.valueOf(cp.getHireRate()) : "0").unit("%").build(),
                     DashboardStatDTO.builder().key("totalSpent").label("Total dépensé")
                             .value(cp.getTotalSpent() != null ? String.valueOf(cp.getTotalSpent()) : "0")
-                            .unit(cp.getCountry() != null ? "XOF" : "XOF").build()
+                            .unit(user.getDefaultCurrency() != null ? user.getDefaultCurrency().name() : "XOF").build()
             ));
         }
 

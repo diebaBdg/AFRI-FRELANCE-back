@@ -3,6 +3,7 @@ package AfriFreelance.API.business.profile;
 import AfriFreelance.API.business.user.User;
 import AfriFreelance.API.business.user.UserRepository;
 import AfriFreelance.API.business.profile.dtos.*;
+import AfriFreelance.API.business.review.ReviewRepository;
 import AfriFreelance.API.config.exceptions.BusinessException;
 import AfriFreelance.API.enums.BadgeType;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,7 @@ public class PublicProfileService {
     private final VerificationService verificationService;
     private final CompanyRepository companyRepository;
     private final CompanyMemberRepository companyMemberRepository;
+    private final ReviewRepository reviewRepository;
 
     public PublicFreelanceProfileDTO getPublicFreelanceProfile(String username) {
         User user = userRepository.findByUsername(username)
@@ -59,8 +61,8 @@ public class PublicProfileService {
                 .currency(fp.getCurrency() != null ? fp.getCurrency().name() : "XOF")
                 .isVerified(fp.getIsVerified())
                 .memberSinceYear(user.getMemberSinceYear())
-                .avgRating(0.0)
-                .totalReviews(0)
+                .avgRating(reviewRepository.getAverageRating(user.getId()))
+                .totalReviews(reviewRepository.getReviewCount(user.getId()).intValue())
                 .skills(fp.getSkills().stream()
                         .map(s -> SkillDTO.builder().id(s.getId()).name(s.getName()).level(s.getLevel().name()).build())
                         .collect(Collectors.toList()))
@@ -202,5 +204,11 @@ public class PublicProfileService {
                             .build();
                 })
                 .collect(Collectors.toList());
+    }
+
+    public UUID getUserIdByUsername(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new BusinessException("USER_NOT_FOUND", "Utilisateur non trouvé: " + username, username))
+                .getId();
     }
 }
