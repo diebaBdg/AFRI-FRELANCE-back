@@ -51,7 +51,8 @@ public class WebSecurityConfig {
             "/api/types-agrement/**",
             "/api/demandes/public",
             "/regions/**",
-            "/ask/history/**"
+            "/ask/history/**",
+            "/api/public/**"
     };
 
     @Bean

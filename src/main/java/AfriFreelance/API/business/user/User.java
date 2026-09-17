@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import AfriFreelance.API.enums.ActiveMode;
+import AfriFreelance.API.enums.Currency;
 import AfriFreelance.API.enums.UserStatus;
 
 import java.time.LocalDateTime;
@@ -46,6 +48,40 @@ public class User {
     @Column(nullable = false, length = 20)
     private UserStatus status = UserStatus.ACTIF;
 
+    // ===== Profile system fields =====
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "active_mode", length = 20)
+    private ActiveMode activeMode = ActiveMode.FREELANCE;
+
+    @Column(name = "avatar_url")
+    private String avatarUrl;
+
+    @Column(length = 200)
+    private String headline;
+
+    @Column(columnDefinition = "TEXT")
+    private String bio;
+
+    @Column(length = 100)
+    private String country;
+
+    @Column(length = 100)
+    private String city;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "default_currency", length = 10)
+    private Currency defaultCurrency = Currency.XOF;
+
+    @Column(length = 50)
+    private String timezone;
+
+    @Column(name = "primary_language", length = 50)
+    private String primaryLanguage;
+
+    @Column(name = "member_since_year")
+    private Integer memberSinceYear;
+
     @Column(name = "date_creation", nullable = false, updatable = false)
     private LocalDateTime dateCreation;
 
@@ -77,6 +113,11 @@ public class User {
         if (totalAssigned == null) totalAssigned = 0;
         if (totalApproved == null) totalApproved = 0;
         if (totalRejected == null) totalRejected = 0;
+        if (activeMode == null) activeMode = ActiveMode.FREELANCE;
+        if (defaultCurrency == null) defaultCurrency = Currency.XOF;
+        if (timezone == null) timezone = "Africa/Dakar";
+        if (primaryLanguage == null) primaryLanguage = "Français";
+        if (memberSinceYear == null) memberSinceYear = java.time.Year.now().getValue();
     }
 
     @PreUpdate
