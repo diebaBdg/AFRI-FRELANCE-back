@@ -1,9 +1,18 @@
 package AfriFreelance.API.business.profile;
 
+import AfriFreelance.API.business.badge.BadgeRepository;
+import AfriFreelance.API.business.clientprofile.ClientProfile;
+import AfriFreelance.API.business.clientprofile.ClientProfileRepository;
+import AfriFreelance.API.business.company.CompanyMemberRepository;
+import AfriFreelance.API.business.company.CompanyRepository;
+import AfriFreelance.API.business.freelanceprofile.FreelanceProfile;
+import AfriFreelance.API.business.freelanceprofile.FreelanceProfileRepository;
+import AfriFreelance.API.business.skill.Skill;
 import AfriFreelance.API.business.user.User;
 import AfriFreelance.API.business.user.UserRepository;
 import AfriFreelance.API.business.profile.dtos.*;
 import AfriFreelance.API.business.review.ReviewRepository;
+import AfriFreelance.API.business.verification.VerificationService;
 import AfriFreelance.API.config.exceptions.BusinessException;
 import AfriFreelance.API.enums.BadgeType;
 import lombok.RequiredArgsConstructor;

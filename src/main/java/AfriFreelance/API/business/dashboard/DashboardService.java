@@ -1,7 +1,13 @@
 package AfriFreelance.API.business.dashboard;
 
+import AfriFreelance.API.business.badge.BadgeRepository;
+import AfriFreelance.API.business.clientprofile.ClientProfile;
+import AfriFreelance.API.business.clientprofile.ClientProfileRepository;
 import AfriFreelance.API.business.dashboard.dto.DashboardDTO;
 import AfriFreelance.API.business.dashboard.dto.DashboardStatDTO;
+import AfriFreelance.API.business.favorite.FavoriteRepository;
+import AfriFreelance.API.business.freelanceprofile.FreelanceProfile;
+import AfriFreelance.API.business.freelanceprofile.FreelanceProfileRepository;
 import AfriFreelance.API.business.profile.*;
 import AfriFreelance.API.business.user.User;
 import AfriFreelance.API.business.user.UserRepository;
