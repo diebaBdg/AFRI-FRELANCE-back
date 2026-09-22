@@ -19,10 +19,10 @@ import java.util.stream.Collectors;
 @Component
 public class JwtUtils {
 
-    @Value("${jwt.secret:dGhpcy1pcy1hLXNlY3JldC1rZXktZm9yLWp3dC10b2tlbi1nZW5lcmF0aW9uLWxvbmctZW5vdWdo}")
+    @Value("${app.jwt.secret:dGhpcy1pcy1hLXNlY3JldC1rZXktZm9yLWp3dC10b2tlbi1nZW5lcmF0aW9uLWxvbmctZW5vdWdo}")
     private String secret;
 
-    @Value("${jwt.expiration:86400000}")
+    @Value("${app.jwt.expiration:86400000}")
     private long jwtExpiration;
 
     private SecretKey getKey() {
