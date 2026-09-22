@@ -9,10 +9,7 @@ import AfriFreelance.API.business.skill.Skill;
 import AfriFreelance.API.business.workexperience.WorkExperience;
 import AfriFreelance.API.business.workpreference.WorkPreference;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import AfriFreelance.API.business.user.User;
 import AfriFreelance.API.enums.AvailabilityStatus;
 import AfriFreelance.API.enums.AvailabilityType;
@@ -27,14 +24,17 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "td_freelance_profiles")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class FreelanceProfile {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
+    @EqualsAndHashCode.Include
     private UUID id;
 
     @OneToOne(fetch = FetchType.LAZY)

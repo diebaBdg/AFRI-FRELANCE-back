@@ -2,10 +2,7 @@ package AfriFreelance.API.business.skill;
 
 import AfriFreelance.API.business.freelanceprofile.FreelanceProfile;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import AfriFreelance.API.enums.SkillLevel;
 
 import java.time.LocalDateTime;
@@ -13,14 +10,17 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "td_skills")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Skill {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
+    @EqualsAndHashCode.Include
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
