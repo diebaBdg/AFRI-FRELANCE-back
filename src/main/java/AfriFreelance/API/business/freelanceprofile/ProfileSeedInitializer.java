@@ -58,7 +58,8 @@ public class ProfileSeedInitializer implements CommandLineRunner {
 
     private void seedSarrBloom() {
         Optional<User> existing = userRepository.findByEmail("sarrbloom@gmail.com");
-        if (existing.isPresent() && freelanceProfileRepository.existsByUserId(existing.get().getId())) {
+        if (existing.isPresent()) {
+            log.info("User {} already seeded, skipping", existing.get().getEmail());
             return;
         }
 
@@ -192,7 +193,8 @@ public class ProfileSeedInitializer implements CommandLineRunner {
 
     private void seedAwaDiop() {
         Optional<User> existing = userRepository.findByEmail("awadiop@gmail.com");
-        if (existing.isPresent() && freelanceProfileRepository.existsByUserId(existing.get().getId())) {
+        if (existing.isPresent()) {
+            log.info("User {} already seeded, skipping", existing.get().getEmail());
             return;
         }
 
@@ -263,7 +265,8 @@ public class ProfileSeedInitializer implements CommandLineRunner {
 
     private void seedKofiMensah() {
         Optional<User> existing = userRepository.findByEmail("kofimensah@gmail.com");
-        if (existing.isPresent() && freelanceProfileRepository.existsByUserId(existing.get().getId())) {
+        if (existing.isPresent()) {
+            log.info("User {} already seeded, skipping", existing.get().getEmail());
             return;
         }
 
@@ -346,7 +349,8 @@ public class ProfileSeedInitializer implements CommandLineRunner {
 
     private void seedFatouNdiaye() {
         Optional<User> existing = userRepository.findByEmail("fatoundiaye@gmail.com");
-        if (existing.isPresent() && freelanceProfileRepository.existsByUserId(existing.get().getId())) {
+        if (existing.isPresent()) {
+            log.info("User {} already seeded, skipping", existing.get().getEmail());
             return;
         }
 
