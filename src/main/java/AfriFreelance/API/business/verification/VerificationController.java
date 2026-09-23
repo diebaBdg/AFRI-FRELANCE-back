@@ -1,6 +1,19 @@
 package AfriFreelance.API.business.verification;
 
 import AfriFreelance.API.business.profile.dtos.*;
+import AfriFreelance.API.business.badge.dtos.*;
+import AfriFreelance.API.business.certification.dtos.*;
+import AfriFreelance.API.business.clientprofile.dtos.*;
+import AfriFreelance.API.business.company.dtos.*;
+import AfriFreelance.API.business.education.dtos.*;
+import AfriFreelance.API.business.favorite.dtos.*;
+import AfriFreelance.API.business.language.dtos.*;
+import AfriFreelance.API.business.portfolio.dtos.*;
+import AfriFreelance.API.business.professionallink.dtos.*;
+import AfriFreelance.API.business.skill.dtos.*;
+import AfriFreelance.API.business.verification.dtos.*;
+import AfriFreelance.API.business.workexperience.dtos.*;
+import AfriFreelance.API.business.workpreference.dtos.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;

@@ -1,5 +1,14 @@
 package AfriFreelance.API.business.profile.dtos;
 
+import AfriFreelance.API.business.badge.dtos.BadgeDTO;
+import AfriFreelance.API.business.certification.dtos.CertificationDTO;
+import AfriFreelance.API.business.education.dtos.EducationDTO;
+import AfriFreelance.API.business.language.dtos.LanguageDTO;
+import AfriFreelance.API.business.portfolio.dtos.PortfolioItemDTO;
+import AfriFreelance.API.business.professionallink.dtos.ProfessionalLinkDTO;
+import AfriFreelance.API.business.skill.dtos.SkillDTO;
+import AfriFreelance.API.business.workexperience.dtos.WorkExperienceDTO;
+import AfriFreelance.API.business.workpreference.dtos.WorkPreferenceDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

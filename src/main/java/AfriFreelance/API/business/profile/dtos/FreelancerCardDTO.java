@@ -1,5 +1,6 @@
 package AfriFreelance.API.business.profile.dtos;
 
+import AfriFreelance.API.business.badge.dtos.BadgeDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

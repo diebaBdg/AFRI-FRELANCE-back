@@ -1,10 +1,19 @@
 package AfriFreelance.API.business.profile.dtos;
 
+import AfriFreelance.API.business.certification.dtos.CertificationDTO;
+import AfriFreelance.API.business.education.dtos.EducationDTO;
+import AfriFreelance.API.business.language.dtos.LanguageDTO;
+import AfriFreelance.API.business.portfolio.dtos.PortfolioItemDTO;
+import AfriFreelance.API.business.professionallink.dtos.ProfessionalLinkDTO;
+import AfriFreelance.API.business.skill.dtos.SkillDTO;
+import AfriFreelance.API.business.workexperience.dtos.WorkExperienceDTO;
+import AfriFreelance.API.business.workpreference.dtos.WorkPreferenceDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -28,12 +37,12 @@ public class FreelanceProfileDTO {
     private Boolean profileActive;
     private Integer completionPercentage;
     private Boolean isVerified;
-    private java.util.List<SkillDTO> skills;
-    private java.util.List<WorkExperienceDTO> experiences;
-    private java.util.List<EducationDTO> educations;
-    private java.util.List<CertificationDTO> certifications;
-    private java.util.List<LanguageDTO> languages;
-    private java.util.List<PortfolioItemDTO> portfolioItems;
-    private java.util.List<ProfessionalLinkDTO> professionalLinks;
+    private List<SkillDTO> skills;
+    private List<WorkExperienceDTO> experiences;
+    private List<EducationDTO> educations;
+    private List<CertificationDTO> certifications;
+    private List<LanguageDTO> languages;
+    private List<PortfolioItemDTO> portfolioItems;
+    private List<ProfessionalLinkDTO> professionalLinks;
     private WorkPreferenceDTO workPreference;
 }

@@ -1,33 +1,29 @@
-package AfriFreelance.API.business.profile.dtos;
+package AfriFreelance.API.business.clientprofile.dtos;
 
-import AfriFreelance.API.business.badge.dtos.BadgeDTO;
-import AfriFreelance.API.business.company.dtos.CompanyDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
 import java.util.UUID;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PublicClientProfileDTO {
+public class ClientProfileDTO {
+    private UUID id;
     private UUID userId;
-    private String username;
     private String displayName;
-    private String avatarUrl;
+    private String clientType;
+    private UUID companyId;
+    private String overview;
     private String country;
     private String city;
-    private Integer memberSinceYear;
+    private Boolean profileActive;
     private Integer projectsPublished;
     private Integer projectsCompleted;
     private Double hireRate;
     private Double avgRating;
     private Double totalSpent;
-    private String clientType;
-    private CompanyDTO company;
-    private List<BadgeDTO> badges;
 }
