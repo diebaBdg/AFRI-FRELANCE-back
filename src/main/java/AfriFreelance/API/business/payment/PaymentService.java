@@ -1,10 +1,12 @@
 package AfriFreelance.API.business.payment;
 
-import AfriFreelance.API.auth.SecurityUserPrincipal;
 import AfriFreelance.API.business.contract.Contract;
 import AfriFreelance.API.business.contract.ContractRepository;
 import AfriFreelance.API.business.notification2.NotificationService;
 import AfriFreelance.API.business.payment.dtos.*;
+import AfriFreelance.API.business.payment.provider.PaymentProviderFactory;
+import AfriFreelance.API.business.payment.provider.PaymentProviderService;
+import AfriFreelance.API.business.payment.provider.ProviderInitResponse;
 import AfriFreelance.API.business.profile.ProfileService;
 import AfriFreelance.API.business.user.User;
 import AfriFreelance.API.business.user.UserRepository;
@@ -34,6 +36,7 @@ public class PaymentService {
     private final UserRepository userRepository;
     private final ProfileService profileService;
     private final NotificationService notificationService;
+    private final PaymentProviderFactory providerFactory;
 
     public PaymentDTO initiateEscrow(PaymentInitRequest request) {
         UUID userId = profileService.getCurrentUserId();
@@ -68,11 +71,27 @@ public class PaymentService {
                 .netAmount(netAmount)
                 .status(PaymentStatus.PENDING)
                 .providerName(request.getProviderName())
+                .customerPhone(request.getCustomerPhone())
                 .build();
 
         payment = paymentRepository.save(payment);
 
-        log.info("Escrow initié: {} pour le contrat {}", txRef, contract.getId());
+        PaymentProviderService provider = providerFactory.getProvider(request.getProviderName());
+        ProviderInitResponse providerResponse = provider.initiateCheckout(
+                txRef,
+                contract.getAmount(),
+                payment.getCurrency(),
+                request.getCustomerPhone(),
+                request.getSuccessUrl(),
+                request.getErrorUrl()
+        );
+
+        payment.setCheckoutUrl(providerResponse.getCheckoutUrl());
+        payment.setProviderSessionId(providerResponse.getProviderSessionId());
+        payment = paymentRepository.save(payment);
+
+        log.info("Escrow initié: {} pour le contrat {} via {} — checkoutUrl={}",
+                txRef, contract.getId(), request.getProviderName(), providerResponse.getCheckoutUrl());
         return toDTO(payment);
     }
 
@@ -148,6 +167,20 @@ public class PaymentService {
             throw new BusinessException("NOT_ESCROWED", "Le paiement n'est pas en séquestre", paymentId);
         }
 
+        String providerSessionId = payment.getProviderSessionId();
+        if (providerSessionId != null && payment.getProviderName() != null) {
+            try {
+                PaymentProviderService provider = providerFactory.getProvider(payment.getProviderName());
+                boolean refunded = provider.refundPayment(providerSessionId, payment.getAmount(), payment.getCurrency());
+                if (!refunded) {
+                    log.warn("Provider refund returned false for payment {}, marking as REFUNDED anyway", paymentId);
+                }
+            } catch (Exception e) {
+                log.error("Provider refund failed for payment {}: {}", paymentId, e.getMessage(), e);
+                throw new BusinessException("REFUND_FAILED", "Le remboursement auprès du fournisseur a échoué", paymentId);
+            }
+        }
+
         payment.setStatus(PaymentStatus.REFUNDED);
         payment = paymentRepository.save(payment);
 
@@ -157,6 +190,75 @@ public class PaymentService {
                 "Paiement remboursé pour \"" + payment.getContract().getProposal().getProject().getTitle() + "\"",
                 payment.getId()
         );
+
+        return toDTO(payment);
+    }
+
+    public PaymentDTO confirmPaymentFromWebhook(String transactionRef, String providerTransactionId) {
+        Payment payment = paymentRepository.findByTransactionRef(transactionRef)
+                .orElseThrow(() -> new BusinessException("PAYMENT_NOT_FOUND",
+                        "Paiement non trouvé pour la référence: " + transactionRef, transactionRef));
+
+        if (payment.getStatus() != PaymentStatus.PENDING) {
+            log.info("Webhook: paiement {} déjà traité (statut {}), ignoré", transactionRef, payment.getStatus());
+            return toDTO(payment);
+        }
+
+        payment.setStatus(PaymentStatus.ESCROWED);
+        payment.setProviderTransactionId(providerTransactionId);
+        payment.setWebhookVerified(true);
+        payment.setPaidAt(LocalDateTime.now());
+        payment = paymentRepository.save(payment);
+
+        notificationService.sendNotification(
+                payment.getPayee().getId(),
+                NotificationType.PAYMENT_CONFIRMED,
+                "Paiement escrow confirmé pour \"" + payment.getContract().getProposal().getProject().getTitle() + "\"",
+                payment.getId()
+        );
+
+        notificationService.sendNotification(
+                payment.getPayer().getId(),
+                NotificationType.PAYMENT_CONFIRMED,
+                "Paiement escrow confirmé pour \"" + payment.getContract().getProposal().getProject().getTitle() + "\"",
+                payment.getId()
+        );
+
+        log.info("Paiement {} confirmé via webhook (providerTxId={})", transactionRef, providerTransactionId);
+        return toDTO(payment);
+    }
+
+    public PaymentDTO verifyPayment(UUID paymentId) {
+        UUID userId = profileService.getCurrentUserId();
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new BusinessException("PAYMENT_NOT_FOUND", "Paiement non trouvé", paymentId));
+
+        if (!payment.getPayer().getId().equals(userId) && !payment.getContract().getClient().getId().equals(userId)) {
+            throw new BusinessException("NOT_AUTHORIZED", "Vous n'êtes pas autorisé", userId);
+        }
+
+        if (payment.getProviderName() == null || payment.getProviderSessionId() == null) {
+            throw new BusinessException("NO_PROVIDER_SESSION", "Aucune session fournisseur à vérifier", paymentId);
+        }
+
+        PaymentProviderService provider = providerFactory.getProvider(payment.getProviderName());
+        boolean verified = provider.verifyPayment(payment.getProviderSessionId());
+
+        if (verified && payment.getStatus() == PaymentStatus.PENDING) {
+            payment.setStatus(PaymentStatus.ESCROWED);
+            payment.setWebhookVerified(true);
+            if (payment.getPaidAt() == null) {
+                payment.setPaidAt(LocalDateTime.now());
+            }
+            payment = paymentRepository.save(payment);
+
+            notificationService.sendNotification(
+                    payment.getPayee().getId(),
+                    NotificationType.PAYMENT_CONFIRMED,
+                    "Paiement escrow confirmé pour \"" + payment.getContract().getProposal().getProject().getTitle() + "\"",
+                    payment.getId()
+            );
+        }
 
         return toDTO(payment);
     }
@@ -219,6 +321,10 @@ public class PaymentService {
                 .status(p.getStatus() != null ? p.getStatus().name() : "PENDING")
                 .providerName(p.getProviderName())
                 .providerTransactionId(p.getProviderTransactionId())
+                .checkoutUrl(p.getCheckoutUrl())
+                .providerSessionId(p.getProviderSessionId())
+                .customerPhone(p.getCustomerPhone())
+                .webhookVerified(p.getWebhookVerified())
                 .paidAt(p.getPaidAt())
                 .releasedAt(p.getReleasedAt())
                 .createdAt(p.getCreatedAt())
