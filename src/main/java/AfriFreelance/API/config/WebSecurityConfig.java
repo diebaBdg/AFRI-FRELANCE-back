@@ -52,7 +52,8 @@ public class WebSecurityConfig {
             "/api/demandes/public",
             "/regions/**",
             "/ask/history/**",
-            "/api/public/**"
+            "/api/public/**",
+            "/webhooks/**"
     };
 
     @Bean

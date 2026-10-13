@@ -62,4 +62,10 @@ public class PaymentController {
     public ResponseEntity<PaymentDTO> getPayment(@PathVariable UUID paymentId) {
         return ResponseEntity.ok(paymentService.getPayment(paymentId));
     }
+
+    @PostMapping("/{paymentId}/verify")
+    @Operation(summary = "Vérifier le statut d'un paiement auprès du fournisseur")
+    public ResponseEntity<PaymentDTO> verifyPayment(@PathVariable UUID paymentId) {
+        return ResponseEntity.ok(paymentService.verifyPayment(paymentId));
+    }
 }
