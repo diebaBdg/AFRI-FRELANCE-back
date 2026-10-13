@@ -22,4 +22,6 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID> {
     Optional<Payment> findByTransactionRef(String transactionRef);
 
     Optional<Payment> findByContractIdAndPaymentType(UUID contractId, AfriFreelance.API.enums.PaymentType paymentType);
+
+    Optional<Payment> findByProviderSessionId(String providerSessionId);
 }
