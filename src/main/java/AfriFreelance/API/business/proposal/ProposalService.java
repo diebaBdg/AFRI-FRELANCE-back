@@ -136,13 +136,15 @@ public class ProposalService {
             proposal.setStatus(ProposalStatus.ACCEPTED);
             proposal = proposalRepository.save(proposal);
 
-            Project project = proposal.getProject();
+            final Project project = proposal.getProject();
+            final UUID acceptedProposalId = proposal.getId();
+
             project.setStatus(ProjectStatus.ASSIGNED);
             project.setAssignedFreelanceId(proposal.getFreelance().getId());
             projectRepository.save(project);
 
             proposalRepository.findByProjectIdOrderByCreatedAtAsc(project.getId()).stream()
-                    .filter(p -> !p.getId().equals(proposal.getId()) && p.getStatus() == ProposalStatus.PENDING)
+                    .filter(p -> !p.getId().equals(acceptedProposalId) && p.getStatus() == ProposalStatus.PENDING)
                     .forEach(p -> {
                         p.setStatus(ProposalStatus.REJECTED);
                         proposalRepository.save(p);
@@ -163,7 +165,6 @@ public class ProposalService {
 
             ContractDTO contract = contractService.createContractFromProposal(proposal);
             log.info("Contrat créé: {} pour la proposition {}", contract.getId(), proposal.getId());
-
         } else if (newStatus == ProposalStatus.REJECTED) {
             if (!proposal.getProject().getClient().getId().equals(userId)) {
                 throw new BusinessException("NOT_PROJECT_OWNER", "Seul le client peut refuser une candidature", userId);

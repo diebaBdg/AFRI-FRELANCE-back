@@ -1,5 +1,6 @@
 package AfriFreelance.API.business.project;
 
+import AfriFreelance.API.enums.ProjectStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
