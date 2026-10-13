@@ -28,6 +28,10 @@ public class PaymentDTO {
     private String status;
     private String providerName;
     private String providerTransactionId;
+    private String checkoutUrl;
+    private String providerSessionId;
+    private String customerPhone;
+    private Boolean webhookVerified;
     private LocalDateTime paidAt;
     private LocalDateTime releasedAt;
     private LocalDateTime createdAt;

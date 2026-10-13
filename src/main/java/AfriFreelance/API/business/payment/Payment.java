@@ -68,6 +68,19 @@ public class Payment {
     @Column(name = "provider_transaction_id", length = 200)
     private String providerTransactionId;
 
+    @Column(name = "checkout_url")
+    private String checkoutUrl;
+
+    @Column(name = "provider_session_id", length = 255)
+    private String providerSessionId;
+
+    @Column(name = "customer_phone", length = 20)
+    private String customerPhone;
+
+    @Column(name = "webhook_verified")
+    @Builder.Default
+    private Boolean webhookVerified = false;
+
     @Column(name = "paid_at")
     private LocalDateTime paidAt;
 
@@ -86,6 +99,7 @@ public class Payment {
         updatedAt = LocalDateTime.now();
         if (status == null) status = PaymentStatus.PENDING;
         if (currency == null) currency = Currency.XOF;
+        if (webhookVerified == null) webhookVerified = false;
     }
 
     @PreUpdate
