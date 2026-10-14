@@ -35,6 +35,7 @@ import AfriFreelance.API.business.workexperience.WorkExperienceRepository;
 import AfriFreelance.API.business.workpreference.WorkPreference;
 import AfriFreelance.API.business.workpreference.WorkPreferenceRepository;
 import AfriFreelance.API.config.exceptions.BusinessException;
+import AfriFreelance.API.config.exceptions.ResourceNotFoundException;
 import AfriFreelance.API.enums.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -69,8 +70,7 @@ public class FreelanceProfileService {
     public FreelanceProfileDTO getMyFreelanceProfile() {
         UUID userId = profileService.getCurrentUserId();
         FreelanceProfile fp = freelanceProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new BusinessException("NO_FREELANCE_PROFILE",
-                        "Vous n'avez pas encore créé de profil freelance", userId));
+                .orElseThrow(() -> new ResourceNotFoundException("FreelanceProfile", "userId", userId));
         return toDTO(fp);
     }
 

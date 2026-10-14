@@ -18,6 +18,7 @@ import AfriFreelance.API.business.verification.dtos.*;
 import AfriFreelance.API.business.workexperience.dtos.*;
 import AfriFreelance.API.business.workpreference.dtos.*;
 import AfriFreelance.API.config.exceptions.BusinessException;
+import AfriFreelance.API.config.exceptions.ResourceNotFoundException;
 import AfriFreelance.API.enums.ClientType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,8 +41,7 @@ public class ClientProfileService {
     public ClientProfileDTO getMyClientProfile() {
         UUID userId = profileService.getCurrentUserId();
         ClientProfile cp = clientProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new BusinessException("NO_CLIENT_PROFILE",
-                        "Vous n'avez pas encore créé de profil client", userId));
+                .orElseThrow(() -> new ResourceNotFoundException("ClientProfile", "userId", userId));
         return toDTO(cp);
     }
 

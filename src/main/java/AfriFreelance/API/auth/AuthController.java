@@ -12,6 +12,8 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import AfriFreelance.API.auth.dtos.*;
 import AfriFreelance.API.business.user.Role;
@@ -117,6 +119,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
+    @Transactional
     @Operation(summary = "Inscription d'un nouvel utilisateur (rôle DEMANDEUR par défaut)")
     public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterRequest registerRequest) {
         try {
@@ -128,6 +131,10 @@ public class AuthController {
             if (!registerRequest.getPassword().equals(registerRequest.getConfirmPassword())) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiError("Les mots de passe ne correspondent pas"));
+            }
+
+            if (registerRequest.getPhone() != null) {
+                registerRequest.setPhone(registerRequest.getPhone().replaceAll("\\s+", ""));
             }
 
             String username = generateUsernameFromEmail(registerRequest.getEmail());
@@ -151,7 +158,13 @@ public class AuthController {
                     .build();
 
             Role demandeurRole = roleRepository.findByCode("DEMANDEUR")
-                    .orElseThrow(() -> new RuntimeException("Rôle DEMANDEUR introuvable. Veuillez initialiser les rôles dans la base."));
+                    .orElseGet(() -> roleRepository.save(Role.builder()
+                            .code("DEMANDEUR")
+                            .libelle("Demandeur")
+                            .description("Rôle par défaut à l'inscription")
+                            .niveauAutorisation(1)
+                            .actif(true)
+                            .build()));
 
             newUser.setRoles(new HashSet<>());
             newUser.getRoles().add(demandeurRole);
@@ -166,6 +179,10 @@ public class AuthController {
                             newUser.getEmail()
                     ));
 
+        } catch (DataIntegrityViolationException e) {
+            log.error("Contrainte d'unicité lors de l'inscription : {}", e.getMostSpecificCause().getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(new ApiError("Cet email, nom d'utilisateur ou téléphone est déjà utilisé"));
         } catch (RuntimeException e) {
             log.error("Erreur lors de l'inscription : {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

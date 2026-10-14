@@ -19,29 +19,16 @@ public class OpenApiConfig {
     @Value("${server.servlet.context-path:/}")
     private String contextPath;
 
-    @Value("${spring.profiles.active:dev}")
-    private String activeProfile;
-
-    @Value("${app.backend.url:}")
-    private String backendUrl;
-
     @Bean
     public OpenAPI customOpenAPI() {
         List<Server> servers = new ArrayList<>();
 
-        if ("preprod".equals(activeProfile) || "prod".equals(activeProfile)) {
-            if (!backendUrl.isBlank()) {
-                Server httpsServer = new Server();
-                httpsServer.setUrl(backendUrl + contextPath);
-                httpsServer.setDescription("Production HTTPS Server");
-                servers.add(httpsServer);
-            }
-        } else {
-            Server localhostServer = new Server();
-            localhostServer.setUrl("http://localhost:8080" + contextPath);
-            localhostServer.setDescription("Local Development Server");
-            servers.add(localhostServer);
-        }
+        // Relative URL only: Swagger "Try it out" stays same-origin
+        // (localhost vs 127.0.0.1, or port 8080 vs 8082, used to look like CORS).
+        Server relativeServer = new Server();
+        relativeServer.setUrl(contextPath);
+        relativeServer.setDescription("Same origin (Swagger)");
+        servers.add(relativeServer);
 
         SecurityScheme bearerScheme = new SecurityScheme()
                 .type(SecurityScheme.Type.HTTP)

@@ -23,8 +23,12 @@ public class RegisterRequest {
     private String email;
 
     @NotBlank(message = "Le téléphone est obligatoire")
-    @Pattern(regexp = "^(\\+221[\\s]?)?[0-9]{9}$", message = "Format de téléphone invalide (ex: +221 77 123 45 67 ou 771234567)")
+    @Pattern(regexp = "^(\\+221)?[0-9]{9}$", message = "Format de téléphone invalide (ex: +221771234567 ou 771234567)")
     private String phone;
+
+    public void setPhone(String phone) {
+        this.phone = phone == null ? null : phone.replaceAll("\\s+", "");
+    }
 
     @NotBlank(message = "Le mot de passe est obligatoire")
     @StrongPassword

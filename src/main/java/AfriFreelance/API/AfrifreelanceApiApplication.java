@@ -1,12 +1,14 @@
 package AfriFreelance.API;
 
+import AfriFreelance.API.config.LocalEnvLoader;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class  AfrifreelanceApiApplication {
+public class AfrifreelanceApiApplication {
 
     public static void main(String[] args) {
+        LocalEnvLoader.apply();
         SpringApplication.run(AfrifreelanceApiApplication.class, args);
         displayStartupInfo();
     }

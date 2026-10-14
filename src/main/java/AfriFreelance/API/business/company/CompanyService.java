@@ -18,6 +18,7 @@ import AfriFreelance.API.business.verification.dtos.*;
 import AfriFreelance.API.business.workexperience.dtos.*;
 import AfriFreelance.API.business.workpreference.dtos.*;
 import AfriFreelance.API.config.exceptions.BusinessException;
+import AfriFreelance.API.config.exceptions.ResourceNotFoundException;
 import AfriFreelance.API.enums.CompanyRole;
 import AfriFreelance.API.enums.CompanySize;
 import lombok.RequiredArgsConstructor;
@@ -44,7 +45,7 @@ public class CompanyService {
         UUID userId = profileService.getCurrentUserId();
         List<Company> companies = companyRepository.findByOwnerId(userId);
         if (companies.isEmpty()) {
-            throw new BusinessException("NO_COMPANY", "Vous n'avez pas d'entreprise", userId);
+            throw new ResourceNotFoundException("Company", "ownerId", userId);
         }
         return toDTO(companies.get(0));
     }

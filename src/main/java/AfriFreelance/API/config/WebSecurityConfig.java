@@ -22,8 +22,11 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Configuration
@@ -33,6 +36,9 @@ public class WebSecurityConfig {
 
     private final JwtFilter jwtAuthFilter;
     private final UserDetailsService userDetailsService;
+
+    @Value("${app.cors.allowed-origins:http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173,http://localhost:8082,http://127.0.0.1:8082}")
+    private String allowedOrigins;
 
     public WebSecurityConfig(JwtFilter jwtAuthFilter, UserDetailsService userDetailsService) {
         this.jwtAuthFilter = jwtAuthFilter;
@@ -48,7 +54,7 @@ public class WebSecurityConfig {
             "/error",
             "/debug/**",
             "/actuator/**",
-            "/api/types-agrement/**",
+            "/api/v1/auth/**",
             "/api/demandes/public",
             "/regions/**",
             "/ask/history/**",
@@ -64,6 +70,9 @@ public class WebSecurityConfig {
                 .authorizeHttpRequests(authz -> authz
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(PUBLIC_URLS).permitAll()
+                        .requestMatchers("/api/projects/me").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/projects", "/api/projects/{projectId}").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/categories", "/api/categories/active").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
@@ -86,16 +95,18 @@ public class WebSecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOriginPatterns(
-                List.of(
-                        "http://localhost:*",
-                        "http://127.0.0.1:*",
-                        "https://*.gainde2000.sn"
-                )
-        );
+        List<String> patterns = new ArrayList<>();
+        Arrays.stream(allowedOrigins.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .forEach(patterns::add);
+        patterns.add("http://localhost:*");
+        patterns.add("http://127.0.0.1:*");
+        patterns.add("https://*.gainde2000.sn");
+        configuration.setAllowedOriginPatterns(patterns.stream().distinct().toList());
 
         configuration.setAllowedMethods(
-                List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
+                List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD")
         );
 
         configuration.setAllowedHeaders(List.of("*"));
