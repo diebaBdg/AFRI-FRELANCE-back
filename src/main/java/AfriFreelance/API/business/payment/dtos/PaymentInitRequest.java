@@ -12,7 +12,7 @@ public class PaymentInitRequest {
     @NotNull(message = "L'ID du contrat est obligatoire")
     private UUID contractId;
 
-    @NotBlank(message = "Le fournisseur de paiement est obligatoire (WAVE ou ORANGE_MONEY)")
+    @NotBlank(message = "Le fournisseur de paiement est obligatoire (PAYDUNYA)")
     private String providerName;
 
     private String customerPhone;

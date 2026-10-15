@@ -16,7 +16,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/webhooks/payments")
 @RequiredArgsConstructor
-@Tag(name = "Webhooks Paiement", description = "Callbacks des fournisseurs de paiement (Wave, Orange Money)")
+@Tag(name = "Webhooks Paiement", description = "Callbacks des fournisseurs de paiement (PayDunya)")
 public class PaymentWebhookController {
 
     private final PaymentService paymentService;
