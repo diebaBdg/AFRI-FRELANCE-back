@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class WebhookResult {
     private String transactionRef;
+    private String invoiceToken;
     private String providerTransactionId;
     private boolean success;
     private double amount;

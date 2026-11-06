@@ -7,6 +7,7 @@ import AfriFreelance.API.business.payment.dtos.*;
 import AfriFreelance.API.business.payment.provider.PaymentProviderFactory;
 import AfriFreelance.API.business.payment.provider.PaymentProviderService;
 import AfriFreelance.API.business.payment.provider.ProviderInitResponse;
+import AfriFreelance.API.business.payment.provider.WebhookResult;
 import AfriFreelance.API.business.profile.ProfileService;
 import AfriFreelance.API.business.user.User;
 import AfriFreelance.API.business.user.UserRepository;
@@ -108,8 +109,27 @@ public class PaymentService {
             throw new BusinessException("PAYMENT_NOT_PENDING", "Ce paiement n'est plus en attente", paymentId);
         }
 
+        if (payment.getProviderName() == null || payment.getProviderSessionId() == null) {
+            throw new BusinessException("NO_PROVIDER_SESSION", "Aucune session fournisseur à vérifier", paymentId);
+        }
+
+        PaymentProviderService provider = providerFactory.getProvider(payment.getProviderName());
+        boolean verified = provider.verifyPayment(payment.getProviderSessionId());
+        if (!verified) {
+            throw new BusinessException(
+                    "PAYMENT_NOT_CONFIRMED",
+                    "PayDunya n'a pas confirmé ce paiement. Terminez le checkout ou réessayez après le callback IPN.",
+                    paymentId
+            );
+        }
+
         payment.setStatus(PaymentStatus.ESCROWED);
-        payment.setProviderTransactionId(request.getProviderTransactionId());
+        payment.setWebhookVerified(true);
+        if (request != null && request.getProviderTransactionId() != null) {
+            payment.setProviderTransactionId(request.getProviderTransactionId());
+        } else if (payment.getProviderTransactionId() == null) {
+            payment.setProviderTransactionId(payment.getProviderSessionId());
+        }
         payment.setPaidAt(LocalDateTime.now());
         payment = paymentRepository.save(payment);
 
@@ -169,15 +189,14 @@ public class PaymentService {
 
         String providerSessionId = payment.getProviderSessionId();
         if (providerSessionId != null && payment.getProviderName() != null) {
-            try {
-                PaymentProviderService provider = providerFactory.getProvider(payment.getProviderName());
-                boolean refunded = provider.refundPayment(providerSessionId, payment.getAmount(), payment.getCurrency());
-                if (!refunded) {
-                    log.warn("Provider refund returned false for payment {}, marking as REFUNDED anyway", paymentId);
-                }
-            } catch (Exception e) {
-                log.error("Provider refund failed for payment {}: {}", paymentId, e.getMessage(), e);
-                throw new BusinessException("REFUND_FAILED", "Le remboursement auprès du fournisseur a échoué", paymentId);
+            PaymentProviderService provider = providerFactory.getProvider(payment.getProviderName());
+            boolean refunded = provider.refundPayment(providerSessionId, payment.getAmount(), payment.getCurrency());
+            if (!refunded) {
+                throw new BusinessException(
+                        "REFUND_MANUAL_REQUIRED",
+                        "PayDunya ne permet pas encore le remboursement automatique. Rembourse le client depuis le dashboard PayDunya, puis mets à jour le statut.",
+                        paymentId
+                );
             }
         }
 
@@ -194,13 +213,12 @@ public class PaymentService {
         return toDTO(payment);
     }
 
-    public PaymentDTO confirmPaymentFromWebhook(String transactionRef, String providerTransactionId) {
-        Payment payment = paymentRepository.findByTransactionRef(transactionRef)
-                .orElseThrow(() -> new BusinessException("PAYMENT_NOT_FOUND",
-                        "Paiement non trouvé pour la référence: " + transactionRef, transactionRef));
+    public PaymentDTO confirmPaymentFromWebhook(WebhookResult result) {
+        Payment payment = findPaymentForWebhook(result);
+        String providerTransactionId = result.getProviderTransactionId();
 
         if (payment.getStatus() != PaymentStatus.PENDING) {
-            log.info("Webhook: paiement {} déjà traité (statut {}), ignoré", transactionRef, payment.getStatus());
+            log.info("Webhook: paiement {} déjà traité (statut {}), ignoré", payment.getTransactionRef(), payment.getStatus());
             return toDTO(payment);
         }
 
@@ -224,8 +242,26 @@ public class PaymentService {
                 payment.getId()
         );
 
-        log.info("Paiement {} confirmé via webhook (providerTxId={})", transactionRef, providerTransactionId);
+        log.info("Paiement {} confirmé via webhook (providerTxId={})", payment.getTransactionRef(), providerTransactionId);
         return toDTO(payment);
+    }
+
+    private Payment findPaymentForWebhook(WebhookResult result) {
+        if (result.getTransactionRef() != null && !result.getTransactionRef().isBlank()) {
+            var byRef = paymentRepository.findByTransactionRef(result.getTransactionRef());
+            if (byRef.isPresent()) {
+                return byRef.get();
+            }
+        }
+        if (result.getInvoiceToken() != null && !result.getInvoiceToken().isBlank()) {
+            var byToken = paymentRepository.findByProviderSessionId(result.getInvoiceToken());
+            if (byToken.isPresent()) {
+                return byToken.get();
+            }
+        }
+        throw new BusinessException("PAYMENT_NOT_FOUND",
+                "Paiement non trouvé pour la référence: " + result.getTransactionRef(),
+                result.getTransactionRef());
     }
 
     public PaymentDTO verifyPayment(UUID paymentId) {
