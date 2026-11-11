@@ -10,6 +10,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StreamUtils;
@@ -30,6 +32,9 @@ public class PaymentWebhookController {
     private final PaymentService paymentService;
     private final PaymentProviderFactory providerFactory;
     private final ObjectMapper objectMapper;
+
+    @Value("${app.frontend.url:http://localhost:5173}")
+    private String frontendUrl;
 
     @PostMapping(value = "/{provider}", consumes = {
             MediaType.APPLICATION_JSON_VALUE,
@@ -61,6 +66,39 @@ public class PaymentWebhookController {
             return ResponseEntity.ok("OK");
         }
     }
+
+    @GetMapping("/{provider}/return")
+    @Operation(summary = "Return URL PayDunya après checkout")
+    public ResponseEntity<Void> handleReturn(
+            @PathVariable String provider,
+            @RequestParam(value = "token", required = false) String token,
+            @RequestParam(value = "invoice_token", required = false) String invoiceToken) {
+        String invoice = (token != null && !token.isBlank()) ? token : invoiceToken;
+        String status = "pending";
+        String paymentId = "";
+        try {
+            if (invoice != null && !invoice.isBlank()) {
+                var dto = paymentService.confirmFromInvoiceToken(invoice);
+                paymentId = dto.getId() != null ? dto.getId().toString() : "";
+                status = "ESCROWED".equals(dto.getStatus()) ? "paid" : dto.getStatus().toLowerCase();
+            }
+        } catch (Exception e) {
+            log.warn("Return URL {} : {}", provider, e.getMessage());
+            status = "error";
+        }
+        String location = frontendUrl.replaceAll("/+$", "")
+                + "/wallet?status=" + status
+                + (paymentId.isBlank() ? "" : "&paymentId=" + paymentId);
+        return ResponseEntity.status(HttpStatus.FOUND).header("Location", location).build();
+    }
+
+    @GetMapping("/{provider}/cancel")
+    @Operation(summary = "Cancel URL PayDunya")
+    public ResponseEntity<Void> handleCancel() {
+        String location = frontendUrl.replaceAll("/+$", "") + "/wallet?status=cancel";
+        return ResponseEntity.status(HttpStatus.FOUND).header("Location", location).build();
+    }
+}
 
     private Map<String, Object> readPayload(HttpServletRequest request) {
         try {

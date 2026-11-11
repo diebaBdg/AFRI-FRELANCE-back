@@ -8,12 +8,14 @@ public interface PaymentProviderService {
 
     String getProviderName();
 
-    ProviderInitResponse initiateCheckout(String transactionRef, double amount, Currency currency,
-                                          String customerPhone, String successUrl, String errorUrl);
+    ProviderInitResponse initiateCheckout(CheckoutInitRequest request);
 
     boolean verifyPayment(String providerSessionId);
 
     boolean refundPayment(String providerTransactionId, double amount, Currency currency);
 
     WebhookResult parseWebhook(Map<String, Object> payload, Map<String, String> headers);
+
+    SoftPayResult initiateSoftPay(String invoiceToken, String channel, String customerName,
+                                  String customerEmail, String phone);
 }

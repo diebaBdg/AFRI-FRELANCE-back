@@ -9,7 +9,6 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -62,6 +61,9 @@ public class PayDunyaPaymentProvider implements PaymentProviderService {
     @Value("${app.backend.url:http://localhost:8082}")
     private String backendUrl;
 
+    @Value("${app.frontend.url:http://localhost:5173}")
+    private String frontendUrl;
+
     @Value("${server.servlet.context-path:/api/v1}")
     private String contextPath;
 
@@ -104,25 +106,46 @@ public class PayDunyaPaymentProvider implements PaymentProviderService {
 
     @Override
     @SuppressWarnings("unchecked")
-    public ProviderInitResponse initiateCheckout(String transactionRef, double amount, Currency currency,
-                                                  String customerPhone, String successUrl, String errorUrl) {
+    public ProviderInitResponse initiateCheckout(CheckoutInitRequest request) {
         requireCredentials();
+        String transactionRef = request.getTransactionRef();
         try {
             String url = getBaseUrl() + "/checkout-invoice/create";
 
             Map<String, Object> invoice = new HashMap<>();
-            invoice.put("total_amount", Math.round(amount));
-            invoice.put("description", "Paiement escrow AfriFreelance - " + transactionRef);
+            invoice.put("total_amount", Math.round(request.getAmount()));
+            invoice.put("description", firstNonBlank(
+                    request.getDescription(),
+                    "Paiement escrow AfriFreelance - " + transactionRef
+            ));
 
-            List<String> channelList = parseChannels();
+            List<String> channelList = parseChannels(request.getChannel());
             if (!channelList.isEmpty()) {
                 invoice.put("channels", channelList);
             }
 
-            if (!isBlank(customerPhone)) {
-                Map<String, Object> customer = new HashMap<>();
-                customer.put("phone", customerPhone);
+            Map<String, Object> customer = new HashMap<>();
+            if (!isBlank(request.getCustomerName())) {
+                customer.put("name", request.getCustomerName());
+            }
+            if (!isBlank(request.getCustomerEmail())) {
+                customer.put("email", request.getCustomerEmail());
+            }
+            if (!isBlank(request.getCustomerPhone())) {
+                customer.put("phone", request.getCustomerPhone());
+            }
+            if (!customer.isEmpty()) {
                 invoice.put("customer", customer);
+            }
+
+            if (!isBlank(request.getItemName())) {
+                Map<String, Object> item0 = new HashMap<>();
+                item0.put("name", request.getItemName());
+                item0.put("quantity", 1);
+                item0.put("unit_price", String.valueOf(Math.round(request.getAmount())));
+                item0.put("total_price", String.valueOf(Math.round(request.getAmount())));
+                item0.put("description", invoice.get("description"));
+                invoice.put("items", Map.of("item_0", item0));
             }
 
             Map<String, Object> store = new HashMap<>();
@@ -135,8 +158,8 @@ public class PayDunyaPaymentProvider implements PaymentProviderService {
             }
 
             Map<String, Object> actions = new HashMap<>();
-            String cancelUrl = firstNonBlank(storeCancelUrl, errorUrl);
-            String returnUrl = firstNonBlank(storeReturnUrl, successUrl);
+            String cancelUrl = firstNonBlank(storeCancelUrl, request.getErrorUrl(), frontendWalletUrl("cancel"));
+            String returnUrl = firstNonBlank(storeReturnUrl, request.getSuccessUrl(), defaultReturnUrl());
             String callbackUrl = firstNonBlank(storeNotificationUrl, defaultIpnUrl());
             if (!isBlank(cancelUrl)) {
                 actions.put("cancel_url", cancelUrl);
@@ -245,6 +268,49 @@ public class PayDunyaPaymentProvider implements PaymentProviderService {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
+    public SoftPayResult initiateSoftPay(String invoiceToken, String channel, String customerName,
+                                         String customerEmail, String phone) {
+        requireCredentials();
+        PayDunyaSoftPay.Method method = PayDunyaSoftPay.requireMethod(channel);
+        if (!method.softPay()) {
+            throw new BusinessException(
+                    "SOFTPAY_NOT_AVAILABLE",
+                    "Utilise checkoutUrl pour payer par carte bancaire.",
+                    method.id()
+            );
+        }
+        Map<String, Object> body = PayDunyaSoftPay.requestBody(method.id(), customerName, customerEmail, phone, invoiceToken);
+        try {
+            String url = getBaseUrl() + method.softPayPath();
+            Map<String, Object> response = restClient.post()
+                    .uri(url)
+                    .headers(h -> h.addAll(buildAuthHeaders()))
+                    .body(body)
+                    .retrieve()
+                    .body(Map.class);
+            SoftPayResult result = PayDunyaSoftPay.parseResponse(response);
+            if (!result.isSuccess()) {
+                throw new BusinessException(
+                        "PAYDUNYA_SOFTPAY_FAILED",
+                        firstNonBlank(result.getMessage(), "Échec SoftPay PayDunya"),
+                        method.id()
+                );
+            }
+            return result;
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("PayDunya SoftPay failed channel={} token={}: {}", method.id(), invoiceToken, e.getMessage(), e);
+            throw new BusinessException(
+                    "PAYDUNYA_SOFTPAY_ERROR",
+                    "Erreur SoftPay PayDunya: " + e.getMessage(),
+                    method.id()
+            );
+        }
+    }
+
+    @Override
     public WebhookResult parseWebhook(Map<String, Object> payload, Map<String, String> headers) {
         Map<String, Object> data = PayDunyaIpnParser.normalizePayload(payload);
         if (data.isEmpty()) {
@@ -279,22 +345,32 @@ public class PayDunyaPaymentProvider implements PaymentProviderService {
     }
 
     private String defaultIpnUrl() {
+        return publicApiBase() + "/webhooks/payments/paydunya";
+    }
+
+    private String defaultReturnUrl() {
+        return publicApiBase() + "/webhooks/payments/paydunya/return";
+    }
+
+    private String frontendWalletUrl(String status) {
+        String front = frontendUrl == null ? "http://localhost:5173" : frontendUrl.replaceAll("/+$", "");
+        return front + "/wallet?status=" + status;
+    }
+
+    private String publicApiBase() {
         String base = backendUrl == null ? "" : backendUrl.replaceAll("/+$", "");
         String ctx = contextPath == null || "/".equals(contextPath) ? "" : contextPath;
         if (!ctx.startsWith("/")) {
             ctx = "/" + ctx;
         }
-        return base + ctx + "/webhooks/payments/paydunya";
+        return base + ctx;
     }
 
-    private List<String> parseChannels() {
-        if (isBlank(channels)) {
-            return List.of();
+    private List<String> parseChannels(String requested) {
+        if (!isBlank(requested)) {
+            return List.of(PayDunyaSoftPay.normalizeChannel(requested));
         }
-        return Arrays.stream(channels.split(","))
-                .map(String::trim)
-                .filter(s -> !s.isEmpty())
-                .toList();
+        return PayDunyaSoftPay.enabled(channels).stream().map(PayDunyaSoftPay.Method::id).toList();
     }
 
     private static boolean isBlank(String value) {

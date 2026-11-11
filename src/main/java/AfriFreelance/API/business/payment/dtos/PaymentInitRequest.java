@@ -20,4 +20,7 @@ public class PaymentInitRequest {
     private String successUrl;
 
     private String errorUrl;
+
+    /** Optional PayDunya channel: wave-senegal, orange-money-senegal, djamo, card */
+    private String channel;
 }

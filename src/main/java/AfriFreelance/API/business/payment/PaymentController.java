@@ -20,6 +20,18 @@ public class PaymentController {
 
     private final PaymentService paymentService;
 
+    @GetMapping("/config")
+    @Operation(summary = "Configuration PayDunya (sandbox, canaux, IPN)")
+    public ResponseEntity<PaymentConfigDTO> getConfig() {
+        return ResponseEntity.ok(paymentService.getConfig());
+    }
+
+    @GetMapping("/methods")
+    @Operation(summary = "Moyens de paiement PayDunya activés")
+    public ResponseEntity<List<PaymentMethodDTO>> getMethods() {
+        return ResponseEntity.ok(paymentService.getConfig().getMethods());
+    }
+
     @PostMapping("/escrow/initiate")
     @Operation(summary = "Initier un dépôt en séquestre (escrow) pour un contrat")
     public ResponseEntity<PaymentDTO> initiateEscrow(@Valid @RequestBody PaymentInitRequest request) {
@@ -67,5 +79,12 @@ public class PaymentController {
     @Operation(summary = "Vérifier le statut d'un paiement auprès du fournisseur")
     public ResponseEntity<PaymentDTO> verifyPayment(@PathVariable UUID paymentId) {
         return ResponseEntity.ok(paymentService.verifyPayment(paymentId));
+    }
+
+    @PostMapping("/{paymentId}/softpay")
+    @Operation(summary = "Lancer SoftPay PayDunya (Wave, Orange Money, Djamo)")
+    public ResponseEntity<PaymentSoftPayResponse> initiateSoftPay(@PathVariable UUID paymentId,
+                                                                  @Valid @RequestBody PaymentSoftPayRequest request) {
+        return ResponseEntity.ok(paymentService.initiateSoftPay(paymentId, request));
     }
 }
