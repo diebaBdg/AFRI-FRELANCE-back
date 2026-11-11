@@ -3,8 +3,8 @@ package AfriFreelance.API.business.payment;
 import AfriFreelance.API.business.payment.provider.PaymentProviderFactory;
 import AfriFreelance.API.business.payment.provider.PaymentProviderService;
 import AfriFreelance.API.business.payment.provider.WebhookResult;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
@@ -98,7 +98,7 @@ public class PaymentWebhookController {
         String location = frontendUrl.replaceAll("/+$", "") + "/wallet?status=cancel";
         return ResponseEntity.status(HttpStatus.FOUND).header("Location", location).build();
     }
-}
+
 
     private Map<String, Object> readPayload(HttpServletRequest request) {
         try {
