@@ -11,6 +11,10 @@ import AfriFreelance.API.enums.NotificationType;
 import AfriFreelance.API.enums.ProjectStatus;
 import AfriFreelance.API.enums.ProjectType;
 import lombok.RequiredArgsConstructor;
+
+import java.time.LocalDate;
+import java.util.Locale;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -28,6 +32,15 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ProjectService {
 
+    private static final Map<String, ProjectType> PROJECT_TYPE_ALIASES = Map.of(
+            "fixed", ProjectType.FIXED_PRICE,
+            "fixedprice", ProjectType.FIXED_PRICE,
+            "fixed_price", ProjectType.FIXED_PRICE,
+            "monthly", ProjectType.HOURLY,
+            "hourly", ProjectType.HOURLY,
+            "horaire", ProjectType.HOURLY
+    );
+
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
     private final ProfileService profileService;
@@ -38,14 +51,17 @@ public class ProjectService {
         User client = userRepository.findById(clientId)
                 .orElseThrow(() -> new BusinessException("USER_NOT_FOUND", "Utilisateur non trouvé", clientId));
 
+        validateBudget(request);
+        ProjectType projectType = resolveProjectType(request.getProjectType());
+
         Project project = Project.builder()
                 .client(client)
                 .title(request.getTitle())
                 .description(request.getDescription())
-                .projectType(request.getProjectType() != null ? ProjectType.valueOf(request.getProjectType()) : ProjectType.FIXED_PRICE)
+                .projectType(projectType)
                 .budgetMin(request.getBudgetMin())
                 .budgetMax(request.getBudgetMax())
-                .currency(request.getCurrency() != null ? Currency.valueOf(request.getCurrency()) : client.getDefaultCurrency())
+                .currency(resolveCurrency(request.getCurrency(), client))
                 .estimatedDurationDays(request.getEstimatedDurationDays())
                 .expectedStartDate(request.getExpectedStartDate())
                 .category(request.getCategory())
@@ -57,6 +73,54 @@ public class ProjectService {
 
         project = projectRepository.save(project);
         return toDTO(project);
+    }
+
+    private ProjectType resolveProjectType(String rawType) {
+        if (rawType == null || rawType.isBlank()) {
+            return ProjectType.FIXED_PRICE;
+        }
+        String normalized = rawType.trim().toLowerCase(Locale.ROOT).replace('-', '_');
+        if (PROJECT_TYPE_ALIASES.containsKey(normalized)) {
+            return PROJECT_TYPE_ALIASES.get(normalized);
+        }
+        throw new BusinessException("INVALID_PROJECT_TYPE",
+                "Type de projet inconnu: " + rawType
+                        + ". Valeurs acceptées: fixed, monthly (ou FIXED_PRICE, HOURLY)",
+                rawType);
+    }
+
+    private void validateBudget(ProjectRequest request) {
+        if (request.getBudgetMin() != null && request.getBudgetMin() < 0) {
+            throw new BusinessException("INVALID_BUDGET", "Le budget minimum ne peut pas être négatif", request.getBudgetMin());
+        }
+        if (request.getBudgetMax() != null && request.getBudgetMax() < 0) {
+            throw new BusinessException("INVALID_BUDGET", "Le budget maximum ne peut pas être négatif", request.getBudgetMax());
+        }
+        if (request.getBudgetMin() != null && request.getBudgetMax() != null
+                && request.getBudgetMin() > request.getBudgetMax()) {
+            throw new BusinessException("INVALID_BUDGET",
+                    "Le budget minimum ne peut pas dépasser le budget maximum",
+                    Map.of("budgetMin", request.getBudgetMin(), "budgetMax", request.getBudgetMax()));
+        }
+    }
+
+    private void validateDeadline(LocalDate deadline) {
+        if (deadline != null && deadline.isBefore(LocalDate.now())) {
+            throw new BusinessException("INVALID_DEADLINE",
+                    "La date limite ne peut pas être antérieure à la date du jour", deadline.toString());
+        }
+    }
+
+    private Currency resolveCurrency(String rawCurrency, User client) {
+        if (rawCurrency == null || rawCurrency.isBlank()) {
+            return client.getDefaultCurrency();
+        }
+        try {
+            return Currency.valueOf(rawCurrency.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException ex) {
+            throw new BusinessException("INVALID_CURRENCY",
+                    "Devise inconnue: " + rawCurrency, rawCurrency);
+        }
     }
 
     public ProjectDTO updateProject(UUID projectId, ProjectRequest request) {
@@ -72,12 +136,17 @@ public class ProjectService {
             throw new BusinessException("PROJECT_NOT_EDITABLE", "Ce projet ne peut plus être modifié", projectId);
         }
 
+        validateBudget(request);
+        validateDeadline(request.getExpectedStartDate());
+
         if (request.getTitle() != null) project.setTitle(request.getTitle());
         if (request.getDescription() != null) project.setDescription(request.getDescription());
-        if (request.getProjectType() != null) project.setProjectType(ProjectType.valueOf(request.getProjectType()));
+        if (request.getProjectType() != null) project.setProjectType(resolveProjectType(request.getProjectType()));
         if (request.getBudgetMin() != null) project.setBudgetMin(request.getBudgetMin());
         if (request.getBudgetMax() != null) project.setBudgetMax(request.getBudgetMax());
-        if (request.getCurrency() != null) project.setCurrency(Currency.valueOf(request.getCurrency()));
+        if (request.getCurrency() != null) {
+            project.setCurrency(resolveCurrency(request.getCurrency(), project.getClient()));
+        }
         if (request.getEstimatedDurationDays() != null) project.setEstimatedDurationDays(request.getEstimatedDurationDays());
         if (request.getExpectedStartDate() != null) project.setExpectedStartDate(request.getExpectedStartDate());
         if (request.getCategory() != null) project.setCategory(request.getCategory());

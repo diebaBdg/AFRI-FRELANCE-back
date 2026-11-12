@@ -1,5 +1,6 @@
 package AfriFreelance.API.business.project.dtos;
 
+import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
@@ -24,6 +25,8 @@ public class ProjectRequest {
     private String currency;
 
     private Integer estimatedDurationDays;
+
+    @FutureOrPresent(message = "La date limite ne peut pas être antérieure à la date du jour")
     private LocalDate expectedStartDate;
 
     @Size(max = 100)
