@@ -119,6 +119,46 @@ public class AuthController {
         }
     }
 
+    @PostMapping("/fix-password")
+    @Transactional
+    @Operation(summary = "Réinitialiser le mot de passe d'un utilisateur en hash BCrypt (outil de débogage)")
+    public ResponseEntity<?> fixPassword(@RequestParam String login, @RequestParam String newPassword) {
+        try {
+            Optional<User> userOpt = findUserByLogin(login);
+            if (userOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new ApiError("Utilisateur introuvable: " + login));
+            }
+
+            User user = userOpt.get();
+            String oldHash = user.getPassword();
+            String newHash = passwordEncoder.encode(newPassword);
+            user.setPassword(newHash);
+            user.setLastPasswordChange(java.time.LocalDateTime.now());
+            userRepository.save(user);
+
+            boolean oldLooksBcrypt = oldHash != null && oldHash.startsWith("$2");
+            boolean newMatches = passwordEncoder.matches(newPassword, newHash);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("login", login);
+            response.put("oldHashPrefix", oldHash == null ? "null" : oldHash.substring(0, Math.min(20, oldHash.length())));
+            response.put("oldHashWasBcrypt", oldLooksBcrypt);
+            response.put("newHashPrefix", newHash.substring(0, 20));
+            response.put("newHashMatches", newMatches);
+            response.put("message", "Mot de passe réinitialisé avec succès");
+
+            log.info("Mot de passe réinitialisé pour {} (ancien hash était BCrypt: {})", login, oldLooksBcrypt);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("Erreur lors de la réinitialisation du mot de passe : {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiError("Erreur: " + e.getMessage()));
+        }
+    }
+
     @PostMapping("/register")
     @Transactional
     @Operation(summary = "Inscription d'un nouvel utilisateur (rôle DEMANDEUR par défaut)")
