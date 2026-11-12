@@ -26,7 +26,12 @@ public class JwtUtils {
     private long jwtExpiration;
 
     private SecretKey getKey() {
-        return Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
+        try {
+            return Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
+        } catch (RuntimeException e) {
+            // Secret fourni en clair (non-Base64) : on utilise ses octets bruts
+            return Keys.hmacShaKeyFor(secret.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        }
     }
 
     public String generateToken(User user) {
