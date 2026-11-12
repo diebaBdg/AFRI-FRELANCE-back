@@ -115,7 +115,12 @@ public class ProjectService {
     @Transactional(readOnly = true)
     public ProjectListDTO searchProjects(String query, String category, String country, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<Project> projectPage = projectRepository.searchProjects(ProjectStatus.OPEN, query, category, country, pageable);
+        Page<Project> projectPage = projectRepository.searchProjects(
+                ProjectStatus.OPEN,
+                query == null ? "" : query,
+                category == null ? "" : category,
+                country == null ? "" : country,
+                pageable);
 
         List<ProjectDTO> dtos = projectPage.getContent().stream()
                 .map(this::toDTO)

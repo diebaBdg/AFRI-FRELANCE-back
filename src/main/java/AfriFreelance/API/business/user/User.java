@@ -106,7 +106,7 @@ public class User {
     @Column(name = "date_modification")
     private LocalDateTime dateModification;
 
-    @ManyToMany(fetch = FetchType.LAZY)
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "td_user_roles",
             joinColumns = @JoinColumn(name = "user_id"),

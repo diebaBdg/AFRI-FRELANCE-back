@@ -21,9 +21,9 @@ public interface ProjectRepository extends JpaRepository<Project, UUID> {
     List<Project> findByClientIdOrderByCreatedAtDesc(UUID clientId);
 
     @Query("SELECT p FROM Project p WHERE p.status = :status AND " +
-           "(:query IS NULL OR LOWER(p.title) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(p.description) LIKE LOWER(CONCAT('%', :query, '%'))) AND " +
-           "(:category IS NULL OR p.category = :category) AND " +
-           "(:country IS NULL OR p.country = :country) " +
+           "(:query = '' OR LOWER(p.title) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(p.description) LIKE LOWER(CONCAT('%', :query, '%'))) AND " +
+           "(:category = '' OR p.category = :category) AND " +
+           "(:country = '' OR p.country = :country) " +
            "ORDER BY p.createdAt DESC")
     Page<Project> searchProjects(@Param("status") ProjectStatus status,
                                   @Param("query") String query,
