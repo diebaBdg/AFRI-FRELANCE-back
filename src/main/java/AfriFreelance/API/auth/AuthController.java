@@ -53,6 +53,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
+    @Transactional(readOnly = true)
     @Operation(summary = "Connexion utilisateur (email ou username + mot de passe)")
     public ResponseEntity<?> loginUser(@RequestBody LoginRequest loginRequest) {
         try {
